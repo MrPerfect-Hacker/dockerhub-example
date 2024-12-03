@@ -4,12 +4,19 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
   environment {
-    DOCKERHUB_CREDENTIALS = credentials('darinpope-dockerhub')
+    REGISTRY = "atrium5365"
+    DOCKERHUB_CREDENTIALS = credentials('atrium5365-dockerhub')
   }
   stages {
     stage('Build') {
       steps {
-        sh 'docker build -t darinpope/dp-alpine:latest .'
+        sh 'docker build -t ${REGISTRY}/dp-alpine:latest .'
+      }
+    }
+    stage('Debug') {
+      steps {
+        sh 'echo Username: $DOCKERHUB_CREDENTIALS_USR'
+        sh 'echo Password: ${DOCKERHUB_CREDENTIALS_PSW:0:4}****'
       }
     }
     stage('Login') {
@@ -19,12 +26,13 @@ pipeline {
     }
     stage('Push') {
       steps {
-        sh 'docker push darinpope/dp-alpine:latest'
+        sh 'docker push ${REGISTRY}/dp-alpine:latest'
       }
     }
   }
   post {
     always {
+      sh 'docker rmi ${REGISTRY}/dp-alpine:latest || true'
       sh 'docker logout'
     }
   }
